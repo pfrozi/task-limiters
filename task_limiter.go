@@ -2,6 +2,7 @@ package tasklimiters
 
 import (
 	"context"
+	"math"
 	"sync/atomic"
 	"time"
 )
@@ -39,23 +40,25 @@ func NewTaskLimiter(c context.Context, ws int, wt time.Duration, statsFunc Stats
 		timer:          time.NewTimer(wt),
 		processed:      make(chan int, ws),
 		tokens:         make(chan int, ws),
-		ratio:          float64(wt) / float64(ws),
+		ratio:          (float64(wt) / float64(ws)) * (1 - math.Pow10(-6)),
 		allowedCounter: atomic.Uint32{},
 		errorCounter:   atomic.Uint32{},
 		status:         Started,
 	}
+	p.pids.Store([]int{})
 	return p
 }
 
-// This function starts the proccess of refresh tokens limited by the timer in the background.
+// This function starts the process of refresh tokens limited by the timer in the background.
 func (p *TaskLimiter) Start() {
-	if p.sf != nil {
-		go p.getProcessed()
-	}
+
+	go p.getProcessed()
 	p.status = Running
 
 	go func() {
 		for {
+			begin := time.Now()
+
 			// fill the tokens channel
 			for i := 0; i < p.ws-len(p.tokens); i++ {
 				p.tokens <- i
@@ -64,12 +67,6 @@ func (p *TaskLimiter) Start() {
 				}
 			}
 
-			var begin time.Time
-			// If the stats function is defined then it will reset the stats and the beginning time
-			if p.sf != nil {
-				p.resetStats()
-				begin = time.Now()
-			}
 			p.timer.Reset(p.wt)
 			select {
 			case <-p.ctx.Done():
@@ -80,11 +77,12 @@ func (p *TaskLimiter) Start() {
 				return
 			case <-p.timer.C:
 				// If the stats function is defined then it will call the stats function
+				end := time.Now()
+				s := p.pids.Load().([]int)
 				if p.sf != nil {
-					end := time.Now()
-					s := p.pids.Load().([]int)
 					p.sf(begin, end, s...)
 				}
+				p.resetStats()
 			}
 		}
 	}()
@@ -94,8 +92,7 @@ func (p *TaskLimiter) Start() {
 func (p *TaskLimiter) getProcessed() {
 	for e := range p.processed {
 		a := p.pids.Load().([]int)
-		a = append(a, e)
-		p.pids.Store(a)
+		p.pids.Store(append(a, e))
 	}
 }
 
@@ -111,9 +108,7 @@ func (p *TaskLimiter) wait(c context.Context, id int) error {
 
 	select {
 	case <-p.tokens:
-		if p.sf != nil {
-			p.processed <- id
-		}
+		p.processed <- id
 		p.allowedCounter.Add(1)
 		return nil
 	case <-c.Done():

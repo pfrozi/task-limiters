@@ -37,14 +37,14 @@ func main() {
     // status function to log the interval. Optional
     statsFunction := func(begin time.Time, end time.Time, pids ...int) {
         if len(pids) < ws {
-            t.Errorf("StatsFunc() = %s to %s - pids < ws: %v",
+            t.Logf("StatsFunc() = %s to %s - pids < ws: %v",
                 begin.Format("15:04:05.0"),
                 end.Format("15:04:05.0"),
                 pids)
         }
     }
 
-    limiter := NewTaskLimiter(ctx, ws, time.Second, statsFunction)
+    limiter := NewTaskLimiter(ctx, ws, wt, statsFunction)
     wg := &sync.WaitGroup{}
 
     process := func(p int) {
@@ -90,4 +90,4 @@ func main() {
 - **What is a [_rate limiter_](https://en.wikipedia.org/wiki/Rate_limiting)?** A "rate limiter" is a resource that controls how frequently some event is allowed to happen. In this package, the event is a goroutine. To avoid confusion with the network concept name (_rate limiting_), we think the _task limiter_ would make more sense.
 - **Window Size (ws)**: Total of tasks allowed to happen in a specific period of time.
 - **Window Time (wt)**: The frequency time in which the tasks are release
-  > _ws tasks / ws time_
+  > _ws tasks / wt time_

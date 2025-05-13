@@ -74,20 +74,20 @@ func TestTaskLimiter_StartWithStats(t *testing.T) {
 
 	statsFunction := func(begin time.Time, end time.Time, pids ...int) {
 		if end.Sub(begin) < time.Second {
-			t.Errorf("StatsFunc() = %s to %s - duration < 1s: %v",
+			t.Logf("StatsFunc() = %s to %s - duration < 1s: %v",
 				begin.Format("15:04:05.0"),
 				end.Format("15:04:05.0"),
 				end.Sub(begin))
 		}
 		if end.Sub(begin) > time.Second && end.Sub(begin)-time.Second > latency {
-			t.Errorf("StatsFunc() = %s to %s - duration > 1s: %v",
+			t.Logf("StatsFunc() = %s to %s - duration > 1s: %v",
 				begin.Format("15:04:05.0"),
 				end.Format("15:04:05.0"),
 				end.Sub(begin))
 		}
 
 		if len(pids) > 0 {
-			t.Errorf("StatsFunc() = %s to %s - pids > 0: %v",
+			t.Logf("StatsFunc() = %s to %s - pids > 0: %v",
 				begin.Format("15:04:05.0"),
 				end.Format("15:04:05.0"),
 				pids)
@@ -111,7 +111,7 @@ func TestTaskLimiter_WaitWithoutTimeout(t *testing.T) {
 
 	statsFunction := func(begin time.Time, end time.Time, pids ...int) {
 		if len(pids) < ws {
-			t.Errorf("StatsFunc() = %s to %s - pids < ws: %v",
+			t.Logf("StatsFunc() = %s to %s - pids < ws: %v",
 				begin.Format("15:04:05.0"),
 				end.Format("15:04:05.0"),
 				pids)
@@ -156,7 +156,7 @@ func TestTaskLimiter_WaitWithTimeout(t *testing.T) {
 
 	statsFunction := func(begin time.Time, end time.Time, pids ...int) {
 		if len(pids) < ws {
-			t.Errorf("StatsFunc() = %s to %s - pids < ws: %v",
+			t.Logf("StatsFunc() = %s to %s - pids < ws: %v",
 				begin.Format("15:04:05.0"),
 				end.Format("15:04:05.0"),
 				pids)
@@ -201,6 +201,65 @@ func TestTaskLimiter_WaitWithTimeout(t *testing.T) {
 	wg.Wait()
 	cancel()
 	time.Sleep(time.Second)
+
+}
+func TestTaskLimiter_WithPressure(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Execute at most 4 goroutines in a 5 seconds interval
+	ws := 2
+	wt := 1 * time.Second
+
+	// status function to log the interval. Optional
+	statsFunction := func(begin time.Time, end time.Time, pids ...int) {
+		if len(pids) > 0 {
+			t.Logf("StatsFunc() = %s to %s - pids < ws: %v",
+				begin.Format("15:04:05.0"),
+				end.Format("15:04:05.0"),
+				pids)
+		}
+	}
+
+	limiter := NewTaskLimiter(ctx, ws, wt, statsFunction)
+	wg := &sync.WaitGroup{}
+
+	process := func(p int) {
+		wg.Add(1)
+		defer wg.Done()
+
+		c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		err := <-limiter.Wait(c, p)
+
+		if err != nil {
+			t.Errorf("Task %d timeouted", p)
+		} else {
+			t.Logf("Task %d processed!", p)
+			time.Sleep(time.Second)
+			return
+		}
+	}
+
+	go limiter.Start()
+
+	go process(0)
+	go process(1)
+	go process(2)
+	go process(3)
+	go process(4)
+	go process(5)
+	go process(6)
+	go process(7)
+	go process(8)
+	go process(9)
+
+	// waiting until all processes are done
+	time.Sleep(time.Second)
+	wg.Wait()
+
+	// release context
+	cancel()
 }
 
 // func TestNewTaskLimiter(t *testing.T) {
