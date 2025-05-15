@@ -1,3 +1,3 @@
 module github.com/pfrozi/task-limiters
 
-go 1.21.6
+go 1.23
