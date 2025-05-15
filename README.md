@@ -1,7 +1,8 @@
 # task-limiter: A Golang rate limiter
 
-<!-- [![CI State](https://github.com/go-co-op/gocron/actions/workflows/go_test.yml/badge.svg?branch=v2&event=push)](https://github.com/go-co-op/gocron/actions)
-![Go Report Card](https://goreportcard.com/badge/github.com/go-co-op/gocron) [![Go Doc](https://godoc.org/github.com/go-co-op/gocron/v2?status.svg)](https://pkg.go.dev/github.com/go-co-op/gocron/v2) -->
+<!--[![CI State](https://github.com/pfrozi/task-limiters/actions/workflows/go_test.yml/badge.svg?branch=main&event=push)](https://github.com/pfrozi/task-limiters/actions)-->
+[![Go Report Card](https://goreportcard.com/badge/github.com/pfrozi/task-limiters)](https://goreportcard.com/report/github.com/pfrozi/task-limiters)
+[![Go Reference](https://pkg.go.dev/badge/github.com/pfrozi/task-limiters.svg)](https://pkg.go.dev/github.com/pfrozi/task-limiters)
 
  `task-limiter` is a package which limit the execution of goroutines in a specific frequency of time.
 
