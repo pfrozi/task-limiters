@@ -1,6 +1,7 @@
 # task-limiter: A Golang rate limiter
 
-[![CI State](https://github.com/pfrozi/task-limiters/actions/workflows/go_test.yml/badge.svg?branch=main&event=push)](https://github.com/pfrozi/task-limiters/actions)
+[![Build Status](https://github.com/pfrozi/task-limiters/actions/workflows/main.yml/badge.svg)](https://github.com/pfrozi/task-limiters/actions)
+[![codecov](https://codecov.io/gh/pfrozi/task-limiters/branch/main/graph/badge.svg)](https://codecov.io/gh/pfrozi/task-limiters)
 [![Go Report Card](https://goreportcard.com/badge/github.com/pfrozi/task-limiters)](https://goreportcard.com/report/github.com/pfrozi/task-limiters)
 [![Go Reference](https://pkg.go.dev/badge/github.com/pfrozi/task-limiters.svg)](https://pkg.go.dev/github.com/pfrozi/task-limiters)
 
