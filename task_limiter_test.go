@@ -259,6 +259,7 @@ func TestTaskLimiter_WithPressure(t *testing.T) {
 	wg.Wait()
 
 	// release context
+	time.Sleep(5 * time.Second)
 	cancel()
 }
 
